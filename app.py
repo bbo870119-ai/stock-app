@@ -1,16 +1,19 @@
-import streamlit as st
-import FinanceDataReader as fdr
-import matplotlib.pyplot as plt
+# 라이브러리 설치가 필요해요: pip install yfinance prophet
+import yfinance as yf
+from prophet import Prophet
 
-st.title("행님의 주가 예측 시스템")
+# 1. 데이터 가져오기 (예: 메타 플랫폼)
+df = yf.download("META", start="2020-01-01", end="2026-03-14")
+df.reset_index(inplace=True)
+df = df.rename(columns={"Date": "ds", "Close": "y"})
 
-ticker = st.text_input("종목 코드를 입력하세요 (예: 005930)", "005930")
+# 2. 모델 학습
+model = Prophet()
+model.fit(df[['ds', 'y']])
 
-if st.button("분석 시작"):
-    df = fdr.DataReader(ticker, "2026-01-01")
-    st.write(f"### {ticker} 종목 데이터")
-    st.line_chart(df['Close']) # 그래프를 아주 쉽게 그려줍니다
-    st.dataframe(df.tail())    # 최근 데이터 표 보기
+# 3. 예측 (향후 365일)
+future = model.make_future_dataframe(periods=365)
+forecast = model.predict(future)
 
-
-    
+# 4. 시각화
+model.plot(forecast)
